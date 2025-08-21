@@ -1,0 +1,16 @@
+[package]
+name = "mlwe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bitvec = "1.0.1"
+rand = "0.8.5"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["lib"]
+
+[[bin]]
+name = "mlwe-crypt"
+path = "src/main.rs"
