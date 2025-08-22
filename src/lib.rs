@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
-use std::ops::{Add, Mul, Neg};
+use std::ops::{Add, BitOr, Mul, Neg};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -191,6 +191,38 @@ impl Add<Vector> for Vector {
     }
 }
 
+impl BitOr<&Vector> for &Vector {
+    type Output = Polynomial;
+
+    fn bitor(self, other: &Vector) -> Self::Output {
+        Vector::inner(self, other)
+    }
+}
+
+impl BitOr<Vector> for &Vector {
+    type Output = Polynomial;
+
+    fn bitor(self, other: Vector) -> Self::Output {
+        Vector::inner(self, &other)
+    }
+}
+
+impl BitOr<&Vector> for Vector {
+    type Output = Polynomial;
+
+    fn bitor(self, other: &Vector) -> Self::Output {
+        Vector::inner(&self, other)
+    }
+}
+
+impl BitOr<Vector> for Vector {
+    type Output = Polynomial;
+
+    fn bitor(self, other: Vector) -> Self::Output {
+        Vector::inner(&self, &other)
+    }
+}
+
 #[derive(Clone)]
 /// A matrix of polynomials
 pub struct Matrix {
@@ -346,8 +378,6 @@ pub fn encrypt<R: Rng>(
     // u = A*r + e1 (mod q)
     let u = a.matmul_transposed(&r) + &e1;
     let e2 = sample_small_poly(rng, params.n, params.eta, params.q);
-    // <t, r> (mod q)
-    let inner = t.inner(&r);
     // Scale message by floor(q/2) to encode
     let mut m_scaled = Polynomial::new(params.n, params.q);
     let scale = params.q / 2;
@@ -355,16 +385,14 @@ pub fn encrypt<R: Rng>(
         m_scaled.coeffs[i] = modq(m.coeffs[i] * scale, params.q);
     }
     // v = <t, r> + m (mod q) [scaled to q/2]
-    let v = (inner + &e2) + m_scaled;
+    let v = ((t | r) + &e2) + m_scaled;
     (u, v)
 }
 
 /// Decrypts the ciphertext (u, v) using secret key s. Returns the message polynomial.
 pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polynomial {
-    // <u, s> (mod q)
-    let inner = u.inner(s);
     // v - <u, s> (mod q)
-    let approx = v + -inner;
+    let approx = v + -(u | s);
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
     let mut m = Polynomial::new(params.n, params.q);
     let q2 = params.q / 2;
