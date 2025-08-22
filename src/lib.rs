@@ -239,6 +239,38 @@ impl Matrix {
     }
 }
 
+impl Mul<&Vector> for &Matrix {
+    type Output = Vector;
+
+    fn mul(self, other: &Vector) -> Self::Output {
+        Matrix::matmul(self, other)
+    }
+}
+
+impl Mul<Vector> for &Matrix {
+    type Output = Vector;
+
+    fn mul(self, other: Vector) -> Self::Output {
+        Matrix::matmul(self, &other)
+    }
+}
+
+impl Mul<&Vector> for Matrix {
+    type Output = Vector;
+
+    fn mul(self, other: &Vector) -> Self::Output {
+        Matrix::matmul(&self, other)
+    }
+}
+
+impl Mul<Vector> for Matrix {
+    type Output = Vector;
+
+    fn mul(self, other: Vector) -> Self::Output {
+        Matrix::matmul(&self, &other)
+    }
+}
+
 /// Parameters for M-LWE cryptography
 pub struct Params {
     /// Polynomial degree (must be power of 2 for x^n + 1).
@@ -299,7 +331,7 @@ pub fn keygen<R: Rng>(params: &Params, rng: &mut R) -> ((Matrix, Vector), Vector
     let a = sample_uniform_matrix(rng, params.d, params.n, params.q);
     let s = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
     let e = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
-    let t = a.matmul(&s) + &e;
+    let t = (&a * &s) + &e;
     ((a, t), s)
 }
 
