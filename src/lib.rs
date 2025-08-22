@@ -478,7 +478,6 @@ pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polyn
     //            = <(A * s) + e, r> + e2 + m - <A^T * r + e1, s>
     //           ~= <(A * s), r>     + e2 + m - <A^T * r, s>
     //           ~= ((A * s)^T * r)  + e2 + m - ((A^T * r)^T * s)
-    //           ~= ((A * s)^T * r)  + e2 + m - ((A * r) * s)
     //           ~= ((A * s)^T * r)  + e2 + m - ((A * r^T) * s)
     //           ~= ((A * s)^T * r)  + e2 + m - (r^T * (A * s))
     //           ~= ((A * s)^T * r)  + e2 + m - ((A * s)^T * r)
