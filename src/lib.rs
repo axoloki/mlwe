@@ -385,9 +385,9 @@ pub fn encrypt_bytes<R: Rng>(
     bytes: &[u8],
     rng: &mut R,
 ) -> (Vector, Polynomial) {
-    println!("bytes.len {}", bytes.len());
+    //println!("bytes.len {}", bytes.len());
     let mut message = sample_binary_poly(rng, params.n, params.q);
-    println!("message.len {}", message.coeffs.len());
+    //println!("message.len {}", message.coeffs.len());
 
     for i in 0..bytes.len() {
         let bits = bytes[i].view_bits::<Lsb0>();
@@ -404,7 +404,7 @@ pub fn encrypt_bytes<R: Rng>(
 /// Decrypts the ciphertext (u, v) using secret key s. Returns the polynomial converted to bytes.
 pub fn decrypt_bytes(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Vec<u8> {
     let decrypted = decrypt(params, s, u, v);
-    println!("decrypted.len {}", decrypted.coeffs.len());
+    //println!("decrypted.len {}", decrypted.coeffs.len());
 
     let mut bytes = Vec::new();
     bytes.resize(decrypted.coeffs.len() / 8, 0u8);
