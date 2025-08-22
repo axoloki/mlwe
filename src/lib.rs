@@ -144,7 +144,7 @@ impl Vector {
         }
     }
 
-    fn add(&self, other: &Self) -> Self {
+    fn add_impl(&self, other: &Self) -> Self {
         let mut res = Self::new(self.d, self.n, self.q);
         for i in 0..self.d {
             res.polys[i] = &self.polys[i] + &other.polys[i];
@@ -158,6 +158,38 @@ impl Vector {
             res = res + (&self.polys[i] * &other.polys[i]);
         }
         res
+    }
+}
+
+impl Add<&Vector> for &Vector {
+    type Output = Vector;
+
+    fn add(self, other: &Vector) -> Self::Output {
+        Vector::add_impl(self, other)
+    }
+}
+
+impl Add<Vector> for &Vector {
+    type Output = Vector;
+
+    fn add(self, other: Vector) -> Self::Output {
+        Vector::add_impl(self, &other)
+    }
+}
+
+impl Add<&Vector> for Vector {
+    type Output = Vector;
+
+    fn add(self, other: &Vector) -> Self::Output {
+        Vector::add_impl(&self, other)
+    }
+}
+
+impl Add<Vector> for Vector {
+    type Output = Vector;
+
+    fn add(self, other: Vector) -> Self::Output {
+        Vector::add_impl(&self, &other)
     }
 }
 
@@ -267,7 +299,7 @@ pub fn keygen<R: Rng>(params: &Params, rng: &mut R) -> ((Matrix, Vector), Vector
     let a = sample_uniform_matrix(rng, params.d, params.n, params.q);
     let s = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
     let e = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
-    let t = a.matmul(&s).add(&e);
+    let t = a.matmul(&s) + &e;
     ((a, t), s)
 }
 
@@ -282,7 +314,7 @@ pub fn encrypt<R: Rng>(
     let r = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
     let e1 = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
     // u = A*r + e1 (mod q)
-    let u = a.matmul_transposed(&r).add(&e1);
+    let u = a.matmul_transposed(&r) + &e1;
     let e2 = sample_small_poly(rng, params.n, params.eta, params.q);
     // <t, r> (mod q)
     let inner = t.inner(&r);
@@ -293,7 +325,7 @@ pub fn encrypt<R: Rng>(
         m_scaled.coeffs[i] = modq(m.coeffs[i] * scale, params.q);
     }
     // v = <t, r> + m (mod q) [scaled to q/2]
-    let v = inner.add(&e2) + m_scaled;
+    let v = (inner + &e2) + m_scaled;
     (u, v)
 }
 
