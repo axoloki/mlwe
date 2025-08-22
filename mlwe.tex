@@ -67,6 +67,39 @@ M-LWE \emph{(Module Learning With Errors)} \cite{mlwe} is a lattice based post-q
 Like Ring-LWE, M-LWE uses quotient rings of polynomials rather than lattices directly.  The hardness of these ring computations reduces to that of standard lattice hard problem (CVP, SVP, SIS), but ring computations are generally faster.  Ring-LWE, though, reduces to a restricted class of lattices with less strict security guarantees, while M-LWE is more flexible.  Thus M-LWE can provide a balance of performance and security, depending on the parameters chosen.
 
 \section{
+  Background
+}
+
+\subsection{
+  Lattices
+}
+
+In linear algebra, vector spaces are composed from linear combinations of basis vectors over real numbers.  Lattices are discrete vector spaces, which means that only integer combinations of the basis vectors are allowed.  In two dimensions, the resulting graph resembles a garden trellis, hence the name lattice.
+
+
+
+\subsection{
+  Rings
+}
+
+\subsubsection{
+  Quotient Rings
+}
+
+\subsubsection{
+  Polynomial Rings
+}
+
+\subsubsection{
+  Quotient Rings of Polynomials
+}
+
+\newpage
+\section{
+  Module Learning with Errors
+}
+
+\subsection{
   Setup
 }
 
@@ -74,8 +107,7 @@ M-LWE requires a set of parameters, which include the polynomial degree $n$, the
 
 Once the parameters are set, you can construct public and private keys.  First construct a rank $d$ square matrix $A$ of degree $n$ polynomials, whose coefficients are integers $\mod{q}$.  Next construct two rank $d$ vectors of degree $n$ polynomials whose coefficients are bounded by $(-\eta, +\eta)$: private key $s$ and error $e$.  Then compute $t = A \cdot s + e \pmod{q}$.  The public key is $(A, t)$.
 
-\newpage
-\section{
+\subsection{
   Encryption
 }
 
@@ -83,7 +115,7 @@ To encrypt a message $m$, first encode it as a binary polynomial (all coefficien
 
 Next construct $u = A^T \cdot r + e_1 \pmod{q}$, then scale binary polynomial $m$ by a factor of $q/2$ to get $m_s$.  Then you can compute the final value $v = \langle t, r \rangle +\;e_2 + m_s \pmod{q}$.  The ciphertext is $(u, v)$.
 
-\section{
+\subsection{
   Decryption
 }
 
