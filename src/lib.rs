@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
-use std::ops::{Add, Neg};
+use std::ops::{Add, Neg, Mul};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -47,7 +47,7 @@ impl Polynomial {
         res
     }
 
-    fn mul(&self, other: &Self) -> Self {
+    fn mul_impl(&self, other: &Self) -> Self {
         let mut res_coeffs = vec![0i64; 2 * self.n - 1];
         for i in 0..self.n {
             for j in 0..self.n {
@@ -117,6 +117,14 @@ impl Neg for Polynomial {
     }
 }
 
+impl Mul<&Polynomial> for &Polynomial {
+    type Output = Polynomial;
+
+    fn mul(self, other: &Polynomial) -> Self::Output {
+        Polynomial::mul_impl(self, other)
+    }
+}
+
 #[derive(Clone)]
 /// A vector of polynomials
 pub struct Vector {
@@ -147,7 +155,7 @@ impl Vector {
     fn inner(&self, other: &Self) -> Polynomial {
         let mut res = Polynomial::new(self.n, self.q);
         for i in 0..self.d {
-            res = res + (&self.polys[i].mul(&other.polys[i]));
+            res = res + (&self.polys[i] * &other.polys[i]);
         }
         res
     }
@@ -178,7 +186,7 @@ impl Matrix {
         for i in 0..self.d {
             let mut sum = Polynomial::new(self.n, self.q);
             for j in 0..self.d {
-                sum = sum + (&self.rows[i][j].mul(&v.polys[j]));
+                sum = sum + (&self.rows[i][j] * &v.polys[j]);
             }
             res.polys[i] = sum;
         }
@@ -191,7 +199,7 @@ impl Matrix {
         for j in 0..self.d {
             let mut sum = Polynomial::new(self.n, self.q);
             for i in 0..self.d {
-                sum = sum + (&self.rows[i][j].mul(&v.polys[i]));
+                sum = sum + (&self.rows[i][j] * &v.polys[i]);
             }
             res.polys[j] = sum;
         }
