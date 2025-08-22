@@ -64,7 +64,7 @@
 
 M-LWE \emph{(Module Learning With Errors)} \cite{mlwe} is a lattice based post-quantum cryptosystem that can be used for encryption, key exchange, and digital signatures.  It is based on LWE \cite{lwe}, and the later improvement Ring-LWE \cite{ringlwe}, but tries to balance the performance gains of the latter against the greater security of the former.
 
-Like Ring-LWE, M-LWE uses quotient rings of polynomials rather than lattices directly.  The hardness of these ring computations reduces to that of standard lattice hard problem (CVP, SVP, SIS), but ring computations are generally faster.  Ring-LWE, though, reduces to a restricted class of lattices with less strict security guarantees, while M-LWE is more flexible.  Thus M-LWE can provide a balance of performance and security, depending on the parameters chosen.
+Like Ring-LWE, M-LWE uses quotient rings of polynomials rather than lattices directly.  The hardness of these ring computations reduces to that of standard lattice hard problems (CVP, SVP, SIS), but ring computations are generally faster.  Ring-LWE, though, reduces to a restricted class of lattices with less strict security guarantees, while M-LWE is more flexible.  Thus M-LWE can provide a balance of performance and security, depending on the parameters chosen.
 
 \section{
   Background
@@ -76,7 +76,11 @@ Like Ring-LWE, M-LWE uses quotient rings of polynomials rather than lattices dir
 
 In linear algebra, vector spaces are composed from linear combinations of basis vectors over real numbers.  Lattices are discrete vector spaces, which means that only integer combinations of the basis vectors are allowed.  In two dimensions, the resulting graph resembles a garden trellis, hence the name lattice.
 
+Like all vector spaces, lattices have a dimension.  This both the number of components each lattice vector contains, and the number of linearly indenpendent vectors needed to for a basis for the space.
 
+There are several hard problems in lattices that can be used when constructing cryptosystems.  The first is the closest vector problem (CVP), i.e. if given a vector not in the lattice, what is the closest lattice vector?  The second is the shortest vector problem (SVP), i.e. what is the shortest vector in a given lattice?  Both of these problems are relatively trivial in small numbers of dimensions, but quickly become intractable as the dimensions increase.
+
+There are algorithms which can solve CVP, but their effectiveness depends on the basis available for the lattice.  If the basis is orthogonal, then the algorithms work well; if not, they work poorly.  
 
 \subsection{
   Rings
