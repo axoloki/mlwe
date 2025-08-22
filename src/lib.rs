@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
-use std::ops::{Add};
+use std::ops::{Add, Neg};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -39,7 +39,7 @@ impl Polynomial {
         res
     }
 
-    fn neg(&self) -> Self {
+    fn neg_impl(&self) -> Self {
         let mut res = Self::new(self.n, self.q);
         for i in 0..self.n {
             res.coeffs[i] = modq(-self.coeffs[i], self.q);
@@ -98,6 +98,22 @@ impl Add<Polynomial> for Polynomial {
 
     fn add(self, other: Polynomial) -> Self::Output {
         Polynomial::add_impl(&self, &other)
+    }
+}
+
+impl Neg for &Polynomial {
+    type Output = Polynomial;
+
+    fn neg(self) -> Self::Output {
+        Polynomial::neg_impl(self)
+    }
+}
+
+impl Neg for Polynomial {
+    type Output = Polynomial;
+
+    fn neg(self) -> Self::Output {
+        Polynomial::neg_impl(&self)
     }
 }
 
@@ -278,7 +294,7 @@ pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polyn
     // <u, s> (mod q)
     let inner = u.inner(s);
     // v - <u, s> (mod q)
-    let approx = v + &inner.neg();
+    let approx = v + -inner;
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
     let mut m = Polynomial::new(params.n, params.q);
     let q2 = params.q / 2;
