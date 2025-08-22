@@ -1,6 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
+use std::ops::{Add};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -30,7 +31,7 @@ impl Polynomial {
         }
     }
 
-    fn add(&self, other: &Self) -> Self {
+    fn add_impl(&self, other: &Self) -> Self {
         let mut res = Self::new(self.n, self.q);
         for i in 0..self.n {
             res.coeffs[i] = modq(self.coeffs[i] + other.coeffs[i], self.q);
@@ -68,6 +69,38 @@ impl Polynomial {
     }
 }
 
+impl Add<&Polynomial> for &Polynomial {
+    type Output = Polynomial;
+
+    fn add(self, other: &Polynomial) -> Self::Output {
+        Polynomial::add_impl(self, other)
+    }
+}
+
+impl Add<Polynomial> for &Polynomial {
+    type Output = Polynomial;
+
+    fn add(self, other: Polynomial) -> Self::Output {
+        Polynomial::add_impl(self, &other)
+    }
+}
+
+impl Add<&Polynomial> for Polynomial {
+    type Output = Polynomial;
+
+    fn add(self, other: &Polynomial) -> Self::Output {
+        Polynomial::add_impl(&self, other)
+    }
+}
+
+impl Add<Polynomial> for Polynomial {
+    type Output = Polynomial;
+
+    fn add(self, other: Polynomial) -> Self::Output {
+        Polynomial::add_impl(&self, &other)
+    }
+}
+
 #[derive(Clone)]
 /// A vector of polynomials
 pub struct Vector {
@@ -90,7 +123,7 @@ impl Vector {
     fn add(&self, other: &Self) -> Self {
         let mut res = Self::new(self.d, self.n, self.q);
         for i in 0..self.d {
-            res.polys[i] = self.polys[i].add(&other.polys[i]);
+            res.polys[i] = &self.polys[i] + &other.polys[i];
         }
         res
     }
@@ -98,7 +131,7 @@ impl Vector {
     fn inner(&self, other: &Self) -> Polynomial {
         let mut res = Polynomial::new(self.n, self.q);
         for i in 0..self.d {
-            res = res.add(&self.polys[i].mul(&other.polys[i]));
+            res = res + (&self.polys[i].mul(&other.polys[i]));
         }
         res
     }
@@ -129,7 +162,7 @@ impl Matrix {
         for i in 0..self.d {
             let mut sum = Polynomial::new(self.n, self.q);
             for j in 0..self.d {
-                sum = sum.add(&self.rows[i][j].mul(&v.polys[j]));
+                sum = sum + (&self.rows[i][j].mul(&v.polys[j]));
             }
             res.polys[i] = sum;
         }
@@ -142,7 +175,7 @@ impl Matrix {
         for j in 0..self.d {
             let mut sum = Polynomial::new(self.n, self.q);
             for i in 0..self.d {
-                sum = sum.add(&self.rows[i][j].mul(&v.polys[i]));
+                sum = sum + (&self.rows[i][j].mul(&v.polys[i]));
             }
             res.polys[j] = sum;
         }
@@ -236,7 +269,7 @@ pub fn encrypt<R: Rng>(
         m_scaled.coeffs[i] = modq(m.coeffs[i] * scale, params.q);
     }
     // v = <t, r> + m (mod q) [scaled to q/2]
-    let v = inner.add(&e2).add(&m_scaled);
+    let v = inner.add(&e2) + m_scaled;
     (u, v)
 }
 
@@ -245,7 +278,7 @@ pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polyn
     // <u, s> (mod q)
     let inner = u.inner(s);
     // v - <u, s> (mod q)
-    let approx = v.add(&inner.neg());
+    let approx = v + &inner.neg();
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
     let mut m = Polynomial::new(params.n, params.q);
     let q2 = params.q / 2;
