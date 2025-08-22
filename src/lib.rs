@@ -455,7 +455,7 @@ pub fn encrypt<R: Rng>(
 ) -> (Vector, Polynomial) {
     let r = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
     let e1 = sample_small_vec(rng, params.d, params.n, params.eta, params.q);
-    // u = A*r + e1 (mod q)
+    // u = A^T*r + e1 (mod q)
     let u = a.matmul_transposed(&r) + &e1;
     let e2 = sample_small_poly(rng, params.n, params.eta, params.q);
     // Scale message by floor(q/2) to encode
@@ -471,7 +471,18 @@ pub fn encrypt<R: Rng>(
 
 /// Decrypts the ciphertext (u, v) using secret key s. Returns the message polynomial.
 pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polynomial {
-    // v - <u, s> (mod q)
+    // m ~= v - <u, s> (mod q)
+    // This works, because
+    // v - <u, s> = <t, r>           + e2 + m - <u, s>
+    //            = <(A * s) + e, r> + e2 + m - <A^T * r + e1, s>
+    //            = <(A * s) + e, r> + e2 + m - <A^T * r + e1, s>
+    //           ~= <(A * s), r>     + e2 + m - <A^T * r, s>
+    //           ~= ((A * s)^T * r)  + e2 + m - ((A^T * r)^T * s)
+    //           ~= ((A * s)^T * r)  + e2 + m - ((A * r) * s)
+    //           ~= ((A * s)^T * r)  + e2 + m - ((A * r^T) * s)
+    //           ~= ((A * s)^T * r)  + e2 + m - (r^T * (A * s))
+    //           ~= ((A * s)^T * r)  + e2 + m - ((A * s) * r)
+    //           ~=                    e2 + m
     let approx = v - (u | s);
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
     let mut m = Polynomial::new(params.n, params.q);
