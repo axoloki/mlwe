@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
-use std::ops::{Add, Neg, Mul};
+use std::ops::{Add, Mul, Neg};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -51,10 +51,8 @@ impl Polynomial {
         let mut res_coeffs = vec![0i64; 2 * self.n - 1];
         for i in 0..self.n {
             for j in 0..self.n {
-                res_coeffs[i + j] = modq(
-                    res_coeffs[i + j] + self.coeffs[i] * other.coeffs[j],
-                    self.q,
-                );
+                res_coeffs[i + j] =
+                    modq(res_coeffs[i + j] + self.coeffs[i] * other.coeffs[j], self.q);
             }
         }
         // Reduce mod x^n + 1
@@ -387,14 +385,16 @@ pub fn encrypt_bytes<R: Rng>(
     bytes: &[u8],
     rng: &mut R,
 ) -> (Vector, Polynomial) {
+    println!("bytes.len {}", bytes.len());
     let mut message = sample_binary_poly(rng, params.n, params.q);
-    
+    println!("message.len {}", message.coeffs.len());
+
     for i in 0..bytes.len() {
         let bits = bytes[i].view_bits::<Lsb0>();
         //println!("byte {} bits {}", bytes[i], bits);
         for (j, bit) in bits.iter().enumerate() {
             //println!("bit {j}: {bit}");
-            message.coeffs[8*i + j] = if *bit {1} else {0};
+            message.coeffs[8 * i + j] = if *bit { 1 } else { 0 };
         }
     }
 
@@ -404,14 +404,15 @@ pub fn encrypt_bytes<R: Rng>(
 /// Decrypts the ciphertext (u, v) using secret key s. Returns the polynomial converted to bytes.
 pub fn decrypt_bytes(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Vec<u8> {
     let decrypted = decrypt(params, s, u, v);
+    println!("decrypted.len {}", decrypted.coeffs.len());
 
     let mut bytes = Vec::new();
     bytes.resize(decrypted.coeffs.len() / 8, 0u8);
-    
+
     for i in 0..bytes.len() {
         let bits = bytes[i].view_bits_mut::<Lsb0>();
         for (j, mut bit) in bits.iter_mut().enumerate() {
-            *bit = decrypted.coeffs[8*i + j] != 0;
+            *bit = decrypted.coeffs[8 * i + j] != 0;
         }
     }
 
@@ -437,6 +438,27 @@ pub fn test_encryption<R: Rng>(params: &Params, trials: usize, rng: &mut R) -> u
     failures
 }
 
+/// Test function to verify encryption/decryption correctness over multiple trials.
+pub fn test_encrypt_bytes<R: Rng>(params: &Params, trials: usize, rng: &mut R) -> usize {
+    let mut failures = 0;
+    let ((a, t), s) = keygen(params, rng);
+    for _ in 0..trials {
+        let mut input_bytes = Vec::new();
+        for _ in 0..(params.n / 8) {
+            let byte = rng.gen_range(0..256) as u8;
+            input_bytes.push(byte);
+        }
+        println!("input_bytes.len {}", input_bytes.len());
+        let (u, v) = encrypt_bytes(params, &a, &t, &input_bytes, rng);
+        let output_bytes = decrypt_bytes(params, &s, &u, &v);
+        if input_bytes != output_bytes {
+            failures += 1;
+            println!("Failure:\ninput:  {input_bytes:?}\noutput: {output_bytes:?}",);
+        }
+    }
+    failures
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -452,6 +474,21 @@ mod tests {
         };
         let trials = 100;
         let failures = test_encryption(&params, trials, &mut rng);
+        assert_eq!(failures, 0);
+        println!("Failures: {}/{}", failures, trials);
+    }
+
+    #[test]
+    fn encrypt_decrypt_bytes() {
+        let mut rng = thread_rng();
+        let params = Params {
+            n: 256,
+            d: 2,
+            q: 65535, // Increased q for more noise tolerance
+            eta: 1,
+        };
+        let trials = 100;
+        let failures = test_encrypt_bytes(&params, trials, &mut rng);
         assert_eq!(failures, 0);
         println!("Failures: {}/{}", failures, trials);
     }

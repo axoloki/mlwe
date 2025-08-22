@@ -24,5 +24,4 @@ fn main() {
 
         println!("output: {}", decrypted_arg);
     }
-    
 }
