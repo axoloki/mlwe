@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use rand::prelude::*;
 //use std::ops::{Add, Neg, Mul, Rem};
-use std::ops::{Add, BitOr, Mul, Neg};
+use std::ops::{Add, BitOr, Mul, Neg, Sub};
 
 /// Modular reduction to [0, q).
 fn modq(x: i64, q: i64) -> i64 {
@@ -35,6 +35,14 @@ impl Polynomial {
         let mut res = Self::new(self.n, self.q);
         for i in 0..self.n {
             res.coeffs[i] = modq(self.coeffs[i] + other.coeffs[i], self.q);
+        }
+        res
+    }
+
+    fn sub_impl(&self, other: &Self) -> Self {
+        let mut res = Self::new(self.n, self.q);
+        for i in 0..self.n {
+            res.coeffs[i] = modq(self.coeffs[i] - other.coeffs[i], self.q);
         }
         res
     }
@@ -99,6 +107,38 @@ impl Add<Polynomial> for Polynomial {
     }
 }
 
+impl Sub<&Polynomial> for &Polynomial {
+    type Output = Polynomial;
+
+    fn sub(self, other: &Polynomial) -> Self::Output {
+        Polynomial::sub_impl(self, other)
+    }
+}
+
+impl Sub<Polynomial> for &Polynomial {
+    type Output = Polynomial;
+
+    fn sub(self, other: Polynomial) -> Self::Output {
+        Polynomial::sub_impl(self, &other)
+    }
+}
+
+impl Sub<&Polynomial> for Polynomial {
+    type Output = Polynomial;
+
+    fn sub(self, other: &Polynomial) -> Self::Output {
+        Polynomial::sub_impl(&self, other)
+    }
+}
+
+impl Sub<Polynomial> for Polynomial {
+    type Output = Polynomial;
+
+    fn sub(self, other: Polynomial) -> Self::Output {
+        Polynomial::sub_impl(&self, &other)
+    }
+}
+
 impl Neg for &Polynomial {
     type Output = Polynomial;
 
@@ -150,6 +190,14 @@ impl Vector {
         res
     }
 
+    fn sub_impl(&self, other: &Self) -> Self {
+        let mut res = Self::new(self.d, self.n, self.q);
+        for i in 0..self.d {
+            res.polys[i] = &self.polys[i] - &other.polys[i];
+        }
+        res
+    }
+
     fn inner(&self, other: &Self) -> Polynomial {
         let mut res = Polynomial::new(self.n, self.q);
         for i in 0..self.d {
@@ -188,6 +236,38 @@ impl Add<Vector> for Vector {
 
     fn add(self, other: Vector) -> Self::Output {
         Vector::add_impl(&self, &other)
+    }
+}
+
+impl Sub<&Vector> for &Vector {
+    type Output = Vector;
+
+    fn sub(self, other: &Vector) -> Self::Output {
+        Vector::sub_impl(self, other)
+    }
+}
+
+impl Sub<Vector> for &Vector {
+    type Output = Vector;
+
+    fn sub(self, other: Vector) -> Self::Output {
+        Vector::sub_impl(self, &other)
+    }
+}
+
+impl Sub<&Vector> for Vector {
+    type Output = Vector;
+
+    fn sub(self, other: &Vector) -> Self::Output {
+        Vector::sub_impl(&self, other)
+    }
+}
+
+impl Sub<Vector> for Vector {
+    type Output = Vector;
+
+    fn sub(self, other: Vector) -> Self::Output {
+        Vector::sub_impl(&self, &other)
     }
 }
 
@@ -392,7 +472,7 @@ pub fn encrypt<R: Rng>(
 /// Decrypts the ciphertext (u, v) using secret key s. Returns the message polynomial.
 pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polynomial {
     // v - <u, s> (mod q)
-    let approx = v + -(u | s);
+    let approx = v - (u | s);
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
     let mut m = Polynomial::new(params.n, params.q);
     let q2 = params.q / 2;
