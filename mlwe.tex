@@ -1,0 +1,120 @@
+\documentclass{article}
+\title{Module Learning With Errors}
+\date{2025-08-22}
+\author{Joseph Wiley Yandle}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage[symbol]{footmisc}
+\usepackage{caption}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\newcommand\Set[2]{\{\,#1\mid#2\,\}}
+\newcommand\underoverset[3]{\underset{#1}{\overset{#2}{#3}}}
+
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  total={170mm,257mm},
+  left=20mm,
+  top=20mm,
+}
+
+\makeatletter
+\def\@maketitle{%
+  \newpage
+  \null
+  \vskip 2em%
+  \begin{center}%
+  \let \footnote \thanks
+    {\Huge\bfseries\@title \par}%
+    \vskip 1.5em%
+    {\large
+      \lineskip .5em%
+      \begin{tabular}[t]{c}%
+        \@author \footnote{xoloki@gmail.com}
+      \end{tabular}\par}%
+    \vskip 1em%
+    {\large \@date}%
+  \end{center}%
+  \par
+  \vskip 1.5em}
+\makeatother
+
+\begin{document}
+\onecolumn
+\maketitle
+
+\begingroup
+\leftskip5em
+\parskip1em
+\rightskip\leftskip
+\noindent\textbf{Abstract.} An exploration of the math behind M-LWE
+
+\par
+\noindent\textbf{Keywords:} Lattice, Polynomial Ring, Learning With Errors, Post Quantum Cryptography
+\par
+\endgroup
+
+\section{
+  Introduction
+}
+
+M-LWE \emph{(Module Learning With Errors)} is a lattice based post-quantum cryptosystem that can be used for encryption, key exchange, and digital signatures.  It is based on LWE \cite{lwe}, and the later improvement Ring-LWE \cite{ring-lwe}.
+
+\section{
+  Setup
+}
+
+M-LWE requires a set of parameters, which include the polynomial degree $n$, the module rank $d$, the modulus $q$, and the bound $\eta$.  $\eta$ will be used to construct small polynomials, which are used to provide errors and randomness which guard the data, and must be significantly smaller than $q$ to allow recovery of plaintext and verification of signatures.
+
+Once the parameters are set, you can construct public and private keys.  First construct a rank $d$ square matrix $A$ of degree $n$ polynomials, whose coefficients are integers $\mod{q}$.  Next construct two rank $d$ vectors of degree $n$ polynomials whose coefficients are bounded by $(-\eta, +\eta)$: private key $s$ and error $e$.  Then compute $t = A \cdot s + e \pmod{q}$.  The public key is $(A, t)$.
+
+\newpage
+\section{
+  Encryption
+}
+
+To encrypt a message $m$, first encode it as a binary polynomial (all coefficients $0$ or $1$) of degree $n$.  Then construct several random rank $d$ vector of degree $n$ polynomials, whose coefficients are bounded by $(-\eta, \eta)$ (i.e. a small polynomial).  These include $r$, which provides randomness; and $e_1, e_2$ which provide errors.
+
+Next construct $u = A^T \cdot r + e_1 \pmod{q}$, then scale binary polynomial $m$ by a factor of $q/2$ to get $m_s$.  Then you can compute the final value $v = \langle t, r \rangle +\;e_2 + m_s \pmod{q}$.  The ciphertext is $(u, v)$.
+
+\section{
+  Decryption
+}
+
+To decrypt ciphertext $(u, v)$, construct approximate value $m_a = v - \langle u, s \rangle \pmod{q}$.  This approximates $m_s$ since:
+\begin{align}
+  v - \langle u, s \rangle &= \langle t, r \rangle + e_2 + m_s - \langle u, s \rangle\nonumber\\
+  &= \langle A \cdot s + e, r \rangle + e_2 + m_s - \langle A^T \cdot r + e_1, s \rangle\nonumber\\
+  &\approx \langle A \cdot s, r \rangle + m_s - \langle A^T \cdot r, s \rangle\nonumber\\
+  &\approx (A \cdot s)^T \cdot r + m_s - (A^T \cdot r)^T \cdot s\nonumber\\
+  &\approx (A \cdot s)^T \cdot r + m_s - (A \cdot r^T) \cdot s\nonumber\\
+  &\approx (A \cdot s)^T \cdot r + m_s - r^T \cdot (A \cdot s)\nonumber\\
+  &\approx (A \cdot s)^T \cdot r + m_s - (A^T \cdot s) \cdot r\nonumber\\
+  &\approx m_s
+\end{align}
+
+Finally, remove the scaling factor $q/2$ from $m_s$: reduce the coefficients to $1$ if they are closer to $q/2$ than $0$, else reduce to $0$.  If $q$ is sufficiently larger than $\eta$, this will recover the plaintext $m$ with high degree of probability.
+
+
+\begin{thebibliography}{2}
+
+\bibitem{lwe}
+  Oded Regev
+  \emph{On Lattices, Learning with Errors, Random Linear Codes, and Cryptography} 2024
+  \texttt{https://arxiv.org/pdf/2401.03703}
+
+\bibitem{ring-lwe}
+  Vadim Lyubashevsky, Chris Peikert, Oded Regev
+  \emph{On Ideal Lattices and Learning with Errors Over Rings} 2013
+  \texttt{https://eprint.iacr.org/2012/230.pdf}
+  
+\end{thebibliography}
+
+
+
+\end{document}
+
