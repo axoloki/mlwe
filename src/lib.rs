@@ -481,7 +481,7 @@ pub fn decrypt(params: &Params, s: &Vector, u: &Vector, v: &Polynomial) -> Polyn
     //           ~= ((A * s)^T * r)  + e2 + m - ((A * r) * s)
     //           ~= ((A * s)^T * r)  + e2 + m - ((A * r^T) * s)
     //           ~= ((A * s)^T * r)  + e2 + m - (r^T * (A * s))
-    //           ~= ((A * s)^T * r)  + e2 + m - ((A * s) * r)
+    //           ~= ((A * s)^T * r)  + e2 + m - ((A * s)^T * r)
     //           ~=                    e2 + m
     let approx = v - (u | s);
     // Decode each coefficient by rounding to nearest multiple of floor(q/2)
