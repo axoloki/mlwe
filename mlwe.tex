@@ -62,7 +62,9 @@
   Introduction
 }
 
-M-LWE \emph{(Module Learning With Errors)} is a lattice based post-quantum cryptosystem that can be used for encryption, key exchange, and digital signatures.  It is based on LWE \cite{lwe}, and the later improvement Ring-LWE \cite{ringlwe}.
+M-LWE \emph{(Module Learning With Errors)} \cite{mlwe} is a lattice based post-quantum cryptosystem that can be used for encryption, key exchange, and digital signatures.  It is based on LWE \cite{lwe}, and the later improvement Ring-LWE \cite{ringlwe}, but tries to balance the performance gains of the latter against the greater security of the former.
+
+Like Ring-LWE, M-LWE uses quotient rings of polynomials rather than lattices directly.  The hardness of these ring computations reduces to that of standard lattice hard problem (CVP, SVP, SIS), but ring computations are generally faster.  Ring-LWE, though, reduces to a restricted class of lattices with less strict security guarantees, while M-LWE is more flexible.  Thus M-LWE can provide a balance of performance and security, depending on the parameters chosen.
 
 \section{
   Setup
@@ -100,7 +102,7 @@ To decrypt ciphertext $(u, v)$, construct approximate value $m_a = v - \langle u
 Finally, remove the scaling factor $q/2$ from $m_s$: reduce the coefficients to $1$ if they are closer to $q/2$ than $0$, else reduce to $0$.  If $q$ is sufficiently larger than $\eta$, this will recover the plaintext $m$ with high degree of probability.
 
 
-\begin{thebibliography}{2}
+\begin{thebibliography}{3}
 
 \bibitem{lwe}
   Oded Regev
@@ -111,10 +113,13 @@ Finally, remove the scaling factor $q/2$ from $m_s$: reduce the coefficients to 
   Vadim Lyubashevsky, Chris Peikert, Oded Regev
   \emph{On Ideal Lattices and Learning with Errors Over Rings}
   \texttt{https://eprint.iacr.org/2012/230.pdf}
+
+\bibitem{mlwe}
+  Adeline Langlois, Damien Stehlé
+  \emph{Worst-Case to Average-Case Reductions for Module Lattices}
+  \texttt{https://eprint.iacr.org/2012/090.pdf}
   
 \end{thebibliography}
-
-
 
 \end{document}
 
